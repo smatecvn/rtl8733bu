@@ -39,6 +39,9 @@ EXTRA_LDFLAGS += --strip-debug
 
 CONFIG_AUTOCFG_CP = n
 
+####################### KERNEL_PATCH ##########################
+CONFIG_MLD_KERNEL_PATCH = y
+
 ########################## WIFI IC ############################
 CONFIG_MULTIDRV = n
 CONFIG_RTL8188E = n
@@ -149,7 +152,7 @@ CONFIG_LAYER2_ROAMING = y
 #bit0: ROAM_ON_EXPIRED, #bit1: ROAM_ON_RESUME, #bit2: ROAM_ACTIVE
 CONFIG_ROAMING_FLAG = 0x3
 ###################### Platform Related #######################
-CONFIG_PLATFORM_I386_PC = n
+CONFIG_PLATFORM_I386_PC = y
 CONFIG_PLATFORM_ANDROID_X86 = n
 CONFIG_PLATFORM_ANDROID_INTEL_X86 = n
 CONFIG_PLATFORM_JB_X86 = n
@@ -182,7 +185,7 @@ CONFIG_PLATFORM_DMP_PHILIPS = n
 CONFIG_PLATFORM_MSTAR_TITANIA12 = n
 CONFIG_PLATFORM_MSTAR = n
 CONFIG_PLATFORM_SZEBOOK = n
-CONFIG_PLATFORM_ARM_SUNxI = y
+CONFIG_PLATFORM_ARM_SUNxI = n
 CONFIG_PLATFORM_ARM_SUN6I = n
 CONFIG_PLATFORM_ARM_SUN7I = n
 CONFIG_PLATFORM_ARM_SUN8I_W3P1 = n
@@ -753,7 +756,8 @@ endif
 ifeq ($(CONFIG_RTL8733B), y)
 RTL871X := rtl8733b
 ifeq ($(CONFIG_USB_HCI), y)
-MODULE_NAME = 8733bu
+#MODULE_NAME = 8733bu
+MODULE_NAME = rtl8733bu
 endif
 ifeq ($(CONFIG_SDIO_HCI), y)
 MODULE_NAME = 8733bs
@@ -1371,6 +1375,11 @@ KSRC := /lib/modules/$(KVER)/build
 MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
 INSTALL_PREFIX :=
 STAGINGMODDIR := /lib/modules/$(KVER)/kernel/drivers/staging
+endif
+
+# DCONFIG_MLD_KERNEL_PATCH
+ifeq ($(CONFIG_MLD_KERNEL_PATCH), y)
+EXTRA_CFLAGS += -DCONFIG_MLD_KERNEL_PATCH
 endif
 
 ifeq ($(CONFIG_PLATFORM_NV_TK1), y)
@@ -2360,7 +2369,10 @@ ifneq ($(USER_MODULE_NAME),)
 MODULE_NAME := $(USER_MODULE_NAME)
 endif
 
+#ifneq ($(KERNELRELEASE),)
 ifneq ($(KERNELRELEASE),)
+KERNELRELEASE := $(shell uname -r)
+endif
 
 ########### this part for *.mk ############################
 include $(src)/hal/phydm/phydm.mk
@@ -2471,16 +2483,16 @@ ifeq ($(CONFIG_RTL8723B), y)
 $(MODULE_NAME)-$(CONFIG_MP_INCLUDED)+= core/rtw_bt_mp.o
 endif
 
+ifneq ($(CONFIG_RTL8733BU),)
 obj-$(CONFIG_RTL8733BU) := $(MODULE_NAME).o
-
 else
-
-export CONFIG_RTL8733BU = m
+obj-m := $(MODULE_NAME).o
 
 all: modules
 
 modules:
-	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(M)  modules
+	#$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(M)  modules
+	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
 #	$(CC_STRIP) --strip-unneeded ${OUT_DIR}/$(M)/$(MODULE_NAME).ko
 
 strip:
@@ -2543,18 +2555,19 @@ config_r:
 
 clean:
 	#$(MAKE) -C $(KSRC) M=$(shell pwd) clean
-	cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko
-	cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko
-	cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
-	cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd core ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
-	cd core ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd platform ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	rm -fr Module.symvers ; rm -fr Module.markers ; rm -fr modules.order
-	rm -fr *.mod.c *.mod *.o .*.cmd *.ko *~
-	rm -fr .tmp_versions
+	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd) clean
+	# cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko
+	# cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko
+	# cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
+	# cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	# cd core ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
+	# cd core ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	# cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	# cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	# cd platform ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	# rm -fr Module.symvers ; rm -fr Module.markers ; rm -fr modules.order
+	# rm -fr *.mod.c *.mod *.o .*.cmd *.ko *~
+	# rm -fr .tmp_versions
 endif
 
 
