@@ -2159,10 +2159,10 @@ int rtw_os_ndev_register(_adapter *adapter, const char *name)
 	u8 rtnl_lock_needed = rtw_rtnl_lock_needed(dvobj);
 
 #ifdef CONFIG_RTW_NAPI
-	#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
-		netif_napi_add(ndev, &adapter->napi, rtw_recv_napi_poll);
-	#else
+	#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 		netif_napi_add(ndev, &adapter->napi, rtw_recv_napi_poll, RTL_NAPI_WEIGHT);
+	#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+		netif_napi_add(ndev, &adapter->napi, rtw_recv_napi_poll);
 	#endif
 #endif /* CONFIG_RTW_NAPI */
 

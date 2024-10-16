@@ -40,7 +40,7 @@ EXTRA_LDFLAGS += --strip-debug
 CONFIG_AUTOCFG_CP = n
 
 ####################### KERNEL_PATCH ##########################
-CONFIG_MLD_KERNEL_PATCH = y
+CONFIG_MLD_KERNEL_PATCH = n
 
 ########################## WIFI IC ############################
 CONFIG_MULTIDRV = n
